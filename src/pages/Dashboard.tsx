@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { fmtData, diasAte } from "@/lib/format";
+import { fmtData, diasAte, fmtPlaca } from "@/lib/format";
 import { useNavigate } from "react-router-dom";
 
 function Kpi({ icon: Icon, label, value, footer, footerTone = "default" }: any) {
@@ -44,8 +44,12 @@ export default function Dashboard() {
   const transfs = transfQ.data ?? [];
 
   const proximas = [...pendencias].sort((a, b) => +new Date(a.prazo) - +new Date(b.prazo)).slice(0, 5);
+  const buscaNorm = busca.toLowerCase();
+  const buscaPlaca = busca.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   const filtered = veiculos.filter((v) =>
-    [v.placa, v.modelo, v.marca, v.renavam].some((s) => s.toLowerCase().includes(busca.toLowerCase()))
+    v.placa.toLowerCase().includes(buscaPlaca) ||
+    fmtPlaca(v.placa).toLowerCase().includes(buscaNorm) ||
+    [v.modelo, v.marca, v.renavam].some((s) => s.toLowerCase().includes(buscaNorm))
   );
 
   return (
@@ -105,7 +109,7 @@ export default function Dashboard() {
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium">
-                        {v?.placa} · {v?.modelo}
+                        {v ? fmtPlaca(v.placa) : ""} · {v?.modelo}
                       </div>
                       <div className="truncate text-xs text-muted-foreground">{p.descricao}</div>
                     </div>
@@ -143,7 +147,7 @@ export default function Dashboard() {
             <tbody className="divide-y divide-border">
               {filtered.map((v) => (
                 <tr key={v.id} className="hover:bg-muted/30 cursor-pointer" onClick={() => navigate(`/veiculos/${v.id}`)}>
-                  <td className="px-5 py-3 font-mono font-semibold">{v.placa}</td>
+                  <td className="px-5 py-3 font-mono font-semibold">{fmtPlaca(v.placa)}</td>
                   <td className="px-5 py-3">{v.marca} {v.modelo}</td>
                   <td className="px-5 py-3 text-muted-foreground">{v.ano}</td>
                   <td className="px-5 py-3"><StatusBadge status={v.status} /></td>

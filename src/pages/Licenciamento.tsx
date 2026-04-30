@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { fmtBRL, fmtData } from "@/lib/format";
+import { fmtBRL, fmtData, fmtPlaca } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Licenciamento() {
@@ -23,7 +23,7 @@ export default function Licenciamento() {
                 const v = veiQ.data?.find((x) => x.id === l.veiculoId);
                 return (
                   <tr key={l.id} className="hover:bg-muted/30">
-                    <td className="px-5 py-3"><span className="font-mono font-semibold">{v?.placa}</span> <span className="text-muted-foreground">{v?.modelo}</span></td>
+                    <td className="px-5 py-3"><span className="font-mono font-semibold">{v ? fmtPlaca(v.placa) : ""}</span> <span className="text-muted-foreground">{v?.modelo}</span></td>
                     <td className="px-5 py-3">{l.ano}</td>
                     <td className="px-5 py-3">{fmtData(l.vencimento)}</td>
                     <td className="px-5 py-3">{fmtBRL(l.valor)}</td>

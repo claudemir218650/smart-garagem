@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
-import { maskRenavam } from "@/lib/format";
+import { maskRenavam, fmtPlaca } from "@/lib/format";
 import { useNavigate } from "react-router-dom";
 import type { StatusGeral } from "@/types";
 import { cn } from "@/lib/utils";
@@ -57,7 +57,7 @@ export default function Veiculos() {
               </div>
               <div className="flex-1 p-4">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-base font-bold tracking-wide">{v.placa}</span>
+                  <span className="font-mono text-base font-bold tracking-wide">{fmtPlaca(v.placa)}</span>
                   <StatusBadge status={v.status} />
                 </div>
                 <div className="mt-1 text-sm font-medium">{v.marca} {v.modelo}</div>

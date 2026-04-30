@@ -7,7 +7,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/EmptyState";
-import { fmtBRL, fmtData, diasAte } from "@/lib/format";
+import { fmtBRL, fmtData, diasAte, fmtPlaca } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { TipoPendencia } from "@/types";
 
@@ -49,7 +49,7 @@ export default function Pendencias() {
                     <Icon className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium">{tipoLabel[p.tipo]} · {v?.placa} {v?.modelo}</div>
+                    <div className="text-sm font-medium">{tipoLabel[p.tipo]} · {v ? fmtPlaca(v.placa) : ""} {v?.modelo}</div>
                     <div className="truncate text-xs text-muted-foreground">{p.descricao}</div>
                   </div>
                   <div className="text-right text-sm">

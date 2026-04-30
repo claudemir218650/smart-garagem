@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
-import { fmtBRL, fmtData, diasAte } from "@/lib/format";
+import { fmtBRL, fmtData, diasAte, fmtPlaca } from "@/lib/format";
 import { EmptyState } from "@/components/EmptyState";
 
 export default function VeiculoDetalhe() {
@@ -35,7 +35,7 @@ export default function VeiculoDetalhe() {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xl font-bold">{v.placa}</span>
+              <span className="font-mono text-xl font-bold">{fmtPlaca(v.placa)}</span>
               <StatusBadge status={v.status} />
             </div>
             <h1 className="mt-1 text-lg font-semibold">{v.marca} {v.modelo}</h1>

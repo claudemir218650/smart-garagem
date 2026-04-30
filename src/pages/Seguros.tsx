@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { fmtData } from "@/lib/format";
+import { fmtData, fmtPlaca } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShieldCheck } from "lucide-react";
 
@@ -30,7 +30,7 @@ export default function Seguros() {
                   <StatusBadge status={s.vigente ? "ok" : "urgente"} label={s.vigente ? "Vigente" : "Vencida"} />
                 </div>
                 <div className="mt-3 text-sm">
-                  <div><span className="text-muted-foreground">Veículo:</span> <span className="font-mono font-semibold">{v?.placa}</span> · {v?.modelo}</div>
+                  <div><span className="text-muted-foreground">Veículo:</span> <span className="font-mono font-semibold">{v ? fmtPlaca(v.placa) : ""}</span> · {v?.modelo}</div>
                   <div className="mt-1 text-muted-foreground">{s.cobertura}</div>
                   <div className="mt-1 text-xs text-muted-foreground">Vigência: {fmtData(s.inicio)} → {fmtData(s.fim)}</div>
                 </div>

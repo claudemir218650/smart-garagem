@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
-import { fmtBRL, fmtData, diasAte } from "@/lib/format";
+import { fmtBRL, fmtData, diasAte, fmtPlaca } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function IPVA() {
@@ -25,7 +25,7 @@ export default function IPVA() {
                 const status = i.pago ? "ok" : dias < 15 ? "atencao" : "ok";
                 return (
                   <tr key={i.id} className="hover:bg-muted/30">
-                    <td className="px-5 py-3"><span className="font-mono font-semibold">{v?.placa}</span> <span className="text-muted-foreground">{v?.modelo}</span></td>
+                    <td className="px-5 py-3"><span className="font-mono font-semibold">{v ? fmtPlaca(v.placa) : ""}</span> <span className="text-muted-foreground">{v?.modelo}</span></td>
                     <td className="px-5 py-3">{i.ano}</td>
                     <td className="px-5 py-3">{i.parcelas}x</td>
                     <td className="px-5 py-3">{fmtData(i.vencimento)}</td>

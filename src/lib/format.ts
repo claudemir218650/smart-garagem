@@ -28,7 +28,12 @@ export const maskRenavam = (r: string) => {
   return `*******${d.slice(-4)}`;
 };
 
-export const fmtPlaca = (p: string) => p.toUpperCase();
+export const fmtPlaca = (p: string) => {
+  if (!p) return "";
+  const s = p.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+  if (s.length <= 3) return s;
+  return `${s.slice(0, 3)}-${s.slice(3, 7)}`;
+};
 
 export const iniciais = (nome: string) =>
   nome

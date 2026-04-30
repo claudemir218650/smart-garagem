@@ -10,7 +10,7 @@ import { api } from "@/lib/api";
 import { PageHeader } from "@/components/PageHeader";
 import { StatusBadge } from "@/components/StatusBadge";
 import { EmptyState } from "@/components/EmptyState";
-import { fmtData, maskCpf } from "@/lib/format";
+import { fmtData, maskCpf, fmtPlaca } from "@/lib/format";
 import type { StatusTransferencia, StatusGeral } from "@/types";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -51,7 +51,7 @@ function Wizard({ onClose }: { onClose: () => void }) {
               <button key={v.id} onClick={() => setVeiculoId(v.id)}
                 className={cn("flex items-center justify-between rounded-lg border p-3 text-left transition",
                   veiculoId === v.id ? "border-primary bg-accent" : "border-border hover:bg-muted/50")}>
-                <div><div className="font-mono font-semibold">{v.placa}</div>
+                <div><div className="font-mono font-semibold">{fmtPlaca(v.placa)}</div>
                   <div className="text-xs text-muted-foreground">{v.marca} {v.modelo}</div></div>
                 <StatusBadge status={v.status} />
               </button>
@@ -80,7 +80,7 @@ function Wizard({ onClose }: { onClose: () => void }) {
           <h3 className="font-semibold">Revisão</h3>
           <p className="text-sm text-muted-foreground">Confirme os dados antes de criar a transferência.</p>
           <ul className="rounded-lg border border-border p-3 text-sm space-y-1">
-            <li>Veículo: <strong>{veiculosQ.data?.find(v => v.id === veiculoId)?.placa ?? "—"}</strong></li>
+            <li>Veículo: <strong>{(() => { const p = veiculosQ.data?.find(v => v.id === veiculoId)?.placa; return p ? fmtPlaca(p) : "—"; })()}</strong></li>
             <li>Comprador: Carlos Lima</li>
             <li>Documentos: 0 anexados</li>
           </ul>
@@ -142,7 +142,7 @@ export default function Transferencias() {
                   const v = veiculosQ.data?.find((x) => x.id === t.veiculoId);
                   return (
                     <tr key={t.id} className="hover:bg-muted/30">
-                      <td className="px-5 py-3 font-mono font-semibold">{v?.placa ?? "—"}</td>
+                      <td className="px-5 py-3 font-mono font-semibold">{v?.placa ? fmtPlaca(v.placa) : "—"}</td>
                       <td className="px-5 py-3"><div>{t.deNome}</div><div className="text-xs text-muted-foreground">{maskCpf(t.deCpf)}</div></td>
                       <td className="px-5 py-3"><div>{t.paraNome}</div><div className="text-xs text-muted-foreground">{maskCpf(t.paraCpf)}</div></td>
                       <td className="px-5 py-3 text-muted-foreground">{fmtData(t.inicio)}</td>
