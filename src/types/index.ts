@@ -51,3 +51,32 @@ export interface Credencial {
 }
 
 export interface User { id: string; email: string; nome: string; }
+
+export type TipoPessoa = "PF" | "PJ";
+
+export interface Endereco {
+  cep: string;
+  logradouro: string;
+  numero: string;
+  complemento?: string;
+  bairro: string;
+  cidade: string;
+  uf: string;
+}
+
+export interface Proprietario {
+  id: string;
+  tipoPessoa: TipoPessoa;
+  // PF
+  nomeCompleto?: string;
+  cpf?: string;
+  dataNascimento?: string; // ISO yyyy-mm-dd
+  // PJ
+  razaoSocial?: string;
+  nomeFantasia?: string;
+  cnpj?: string;
+  // contato
+  email?: string;
+  telefone?: string;
+  endereco: Endereco;
+}
