@@ -1,4 +1,4 @@
-import { Outlet, Navigate } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 import { useState } from "react";
 import { Menu } from "lucide-react";
 import { AppSidebar } from "./AppSidebar";
@@ -7,7 +7,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function AppLayout() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   const [open, setOpen] = useState(false);
 
   if (loading) {
@@ -21,7 +21,6 @@ export function AppLayout() {
       </div>
     );
   }
-  if (!user) return <Navigate to="/login" replace />;
 
   return (
     <div className="flex min-h-screen bg-background">

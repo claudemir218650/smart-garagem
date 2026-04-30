@@ -1,7 +1,7 @@
 import { NavLink, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Car, ArrowRightLeft, FileBadge, Receipt,
-  ShieldCheck, AlertTriangle, FolderOpen, KeyRound, Settings, LogOut,
+  ShieldCheck, AlertTriangle, FolderOpen, KeyRound, Settings,
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ const items = [
 ];
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   useLocation();
 
   return (
@@ -76,13 +76,6 @@ export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
             <div className="truncate text-sm font-medium text-white">{user?.nome ?? "Usuário"}</div>
             <div className="truncate text-xs text-sidebar-foreground/70">{user?.email ?? ""}</div>
           </div>
-          <button
-            onClick={logout}
-            className="rounded-md p-1.5 text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-white transition"
-            aria-label="Sair"
-          >
-            <LogOut className="size-4" />
-          </button>
         </div>
       </div>
     </aside>
