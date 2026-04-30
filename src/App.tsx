@@ -17,6 +17,7 @@ import Pendencias from "./pages/Pendencias.tsx";
 import Documentos from "./pages/Documentos.tsx";
 import Cofre from "./pages/Cofre.tsx";
 import Configuracoes from "./pages/Configuracoes.tsx";
+import Cadastros from "./pages/Cadastros.tsx";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppLayout } from "./components/AppLayout";
 
@@ -44,6 +45,7 @@ const App = () => (
               <Route path="/documentos" element={<Documentos />} />
               <Route path="/cofre" element={<Cofre />} />
               <Route path="/configuracoes" element={<Configuracoes />} />
+              <Route path="/cadastros" element={<Cadastros />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
