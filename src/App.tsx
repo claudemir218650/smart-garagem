@@ -3,8 +3,22 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Login from "./pages/Login.tsx";
+import AuthCallback from "./pages/AuthCallback.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
+import Veiculos from "./pages/Veiculos.tsx";
+import VeiculoDetalhe from "./pages/VeiculoDetalhe.tsx";
+import Transferencias from "./pages/Transferencias.tsx";
+import Licenciamento from "./pages/Licenciamento.tsx";
+import IPVA from "./pages/IPVA.tsx";
+import Seguros from "./pages/Seguros.tsx";
+import Pendencias from "./pages/Pendencias.tsx";
+import Documentos from "./pages/Documentos.tsx";
+import Cofre from "./pages/Cofre.tsx";
+import Configuracoes from "./pages/Configuracoes.tsx";
+import { AuthProvider } from "./contexts/AuthContext";
+import { AppLayout } from "./components/AppLayout";
 
 const queryClient = new QueryClient();
 
@@ -14,11 +28,26 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/veiculos" element={<Veiculos />} />
+              <Route path="/veiculos/:id" element={<VeiculoDetalhe />} />
+              <Route path="/transferencias" element={<Transferencias />} />
+              <Route path="/licenciamento" element={<Licenciamento />} />
+              <Route path="/ipva" element={<IPVA />} />
+              <Route path="/seguros" element={<Seguros />} />
+              <Route path="/pendencias" element={<Pendencias />} />
+              <Route path="/documentos" element={<Documentos />} />
+              <Route path="/cofre" element={<Cofre />} />
+              <Route path="/configuracoes" element={<Configuracoes />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
