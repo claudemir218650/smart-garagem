@@ -153,10 +153,10 @@ export default function Configuracoes() {
   };
 
   const onSubmit = (values: FormValues) => {
-    const payload: Proprietario = {
+    const payload = {
       id: "owner-1",
       ...values,
-    };
+    } as Proprietario;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
     toast.success("Dados do proprietário salvos");
   };
