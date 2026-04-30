@@ -32,11 +32,19 @@ export default function Login() {
   };
 
   const fakeAccept = async () => {
+    if (!sent) return;
     setLoading(true);
-    const { token, user } = await api.verifyToken("dev");
-    loginWithToken(token, user);
-    toast.success("Bem-vindo de volta!");
-    navigate("/", { replace: true });
+    try {
+      const nome = sent.split("@")[0].replace(/[._-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+      const { token, user } = await api.verifyToken("dev", sent, nome);
+      loginWithToken(token, user);
+      toast.success("Bem-vindo!");
+      navigate("/", { replace: true });
+    } catch {
+      toast.error("Falha ao entrar. Tente novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
