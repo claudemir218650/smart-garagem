@@ -89,8 +89,8 @@ function Locked({ onUnlock }: { onUnlock: () => void }) {
     setLoading(true);
     const r = await api.vaultUnlock(pwd);
     setLoading(false);
-    if (r.ok) {
-      vault.set(r.token!, r.expiresIn!);
+    if (r.ok && "token" in r && r.token && r.expiresIn) {
+      vault.set(r.token, r.expiresIn);
       toast.success("Cofre desbloqueado");
       onUnlock();
     } else toast.error("Master password incorreta");
