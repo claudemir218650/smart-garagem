@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
@@ -18,7 +18,7 @@ export interface ProprietarioComboboxProps {
   placeholder?: string;
   id?: string;
   error?: string;
-  emptyHint?: string;
+  emptyHint?: ReactNode;
 }
 
 export function ProprietarioCombobox({
