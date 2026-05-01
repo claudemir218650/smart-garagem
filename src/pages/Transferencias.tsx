@@ -4,6 +4,7 @@ import {
   Plus, ArrowRightLeft, User, ShoppingCart, Pencil, Check, Car as CarIcon,
   Zap, FileSignature, ClipboardCheck, ChevronRight, ChevronLeft, Sparkles,
 } from "lucide-react";
+import { Mail, Phone, MapPin, Search, X, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
@@ -47,154 +48,182 @@ function avatarInitials(nome: string) {
     .join("") || "?";
 }
 
-interface PartyCardProps {
-  role: "vendedor" | "comprador";
-  nome: string;
-  tipo: "PF" | "PJ";
-  doc: string;
-  cadastrado?: boolean;
-  editavel: boolean;
-  onEdit?: () => void;
-  onCancelEdit?: () => void;
-  onChangeNome: (v: string) => void;
-  onChangeTipo: (v: "PF" | "PJ") => void;
-  onChangeDoc: (v: string) => void;
-  onSelectProprietario: (p: Proprietario) => void;
+function nomeDe(p: Proprietario) {
+  return p.tipoPessoa === "PF" ? (p.nomeCompleto ?? "") : (p.razaoSocial ?? p.nomeFantasia ?? "");
+}
+function docDe(p: Proprietario) {
+  return (p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "";
 }
 
-function PartyCard({
-  role, nome, tipo, doc, cadastrado, editavel,
-  onEdit, onCancelEdit, onChangeNome, onChangeTipo, onChangeDoc, onSelectProprietario,
-}: PartyCardProps) {
+interface PartyCardProps {
+  role: "vendedor" | "comprador";
+  proprietario: Proprietario | null;
+  onSelect: (p: Proprietario | null) => void;
+}
+
+function PartyCard({ role, proprietario, onSelect }: PartyCardProps) {
   const isVendedor = role === "vendedor";
   const Icon = isVendedor ? User : ShoppingCart;
-  const accent = isVendedor ? "from-blue-500/10 to-blue-500/0" : "from-emerald-500/10 to-emerald-500/0";
+  const accent = isVendedor
+    ? "from-blue-500/10 to-transparent"
+    : "from-emerald-500/10 to-transparent";
   const iconBg = isVendedor ? "bg-blue-500/15 text-blue-600" : "bg-emerald-500/15 text-emerald-600";
-  const ringActive = isVendedor ? "ring-blue-500/20" : "ring-emerald-500/20";
-  const docPlaceholder = tipo === "PF" ? "000.000.000-00" : "00.000.000/0000-00";
-  const preenchido = !!nome && !!doc;
+  const ringActive = isVendedor ? "ring-blue-500/25" : "ring-emerald-500/25";
 
   return (
-    <section className={cn(
-      "group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
-      preenchido && "ring-1", preenchido && ringActive,
-    )}>
-      {/* Header com gradiente */}
-      <header className={cn("flex items-center gap-3 border-b border-border bg-gradient-to-br px-5 py-4", accent)}>
+    <section
+      className={cn(
+        "relative flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
+        proprietario && "ring-1", proprietario && ringActive,
+      )}
+    >
+      {/* Header */}
+      <header
+        className={cn(
+          "flex items-center gap-3 border-b border-border bg-gradient-to-br px-5 py-4",
+          accent,
+        )}
+      >
         <div className={cn("flex size-10 items-center justify-center rounded-xl", iconBg)}>
           <Icon className="size-5" />
         </div>
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h4 className="text-sm font-semibold">{isVendedor ? "Vendedor" : "Comprador"}</h4>
-            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-              {tipo}
-            </span>
-          </div>
+          <h4 className="text-sm font-semibold leading-tight">
+            {isVendedor ? "Vendedor" : "Comprador"}
+          </h4>
           <p className="text-xs text-muted-foreground">
             {isVendedor ? "Proprietário atual do veículo" : "Quem vai receber o veículo"}
           </p>
         </div>
-        {isVendedor && (
-          cadastrado ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[10px] font-semibold text-success">
-              <Check className="size-3" /> Cadastrado
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-1 text-[10px] font-semibold text-warning">
-              Incompleto
-            </span>
-          )
+        {proprietario && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[10px] font-semibold text-success">
+            <Check className="size-3" /> Cadastrado
+          </span>
         )}
       </header>
 
       {/* Corpo */}
-      <div className="p-5">
-        {!editavel ? (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-bold",
-                iconBg,
-              )}>
-                {avatarInitials(nome || "?")}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-semibold">{nome || "—"}</div>
-                <div className="font-mono text-xs text-muted-foreground">
-                  {doc ? fmtDoc(tipo, doc) : "documento não informado"}
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/30 p-3">
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</div>
-                <div className="mt-0.5 text-sm font-medium">{tipo === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}</div>
-              </div>
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  {tipo === "PF" ? "CPF" : "CNPJ"}
-                </div>
-                <div className="mt-0.5 truncate font-mono text-sm font-medium">
-                  {doc ? fmtDoc(tipo, doc) : "—"}
-                </div>
-              </div>
-            </div>
-
-            <Button type="button" variant="outline" size="sm" className="w-full" onClick={onEdit}>
-              <Pencil className="mr-1.5 size-3.5" /> Editar dados
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-muted-foreground">
-                {tipo === "PF" ? "Nome completo" : "Razão social"}
-              </Label>
-              <ProprietarioCombobox
-                value={nome}
-                onChange={onChangeNome}
-                onSelect={onSelectProprietario}
-                placeholder={tipo === "PF" ? "Buscar pessoa cadastrada..." : "Buscar empresa cadastrada..."}
-              />
-              <p className="text-[11px] text-muted-foreground">
-                Comece a digitar para buscar nos cadastros existentes.
-              </p>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
-              <SegPfPj value={tipo} onChange={onChangeTipo} />
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold text-muted-foreground">
-                  {tipo === "PF" ? "CPF" : "CNPJ"}
-                </Label>
-                <Input
-                  inputMode="numeric"
-                  value={doc ? fmtDoc(tipo, doc) : ""}
-                  onChange={(e) => onChangeDoc(onlyDigits(e.target.value))}
-                  placeholder={docPlaceholder}
-                  className="font-mono"
-                  maxLength={tipo === "PF" ? 14 : 18}
+      <div className="flex-1 p-5">
+        {!proprietario ? (
+          <div className="space-y-3">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              Buscar pessoa cadastrada
+            </Label>
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="[&_input]:pl-9">
+                <ProprietarioCombobox
+                  value=""
+                  onChange={() => {}}
+                  onSelect={onSelect}
+                  placeholder="Digite nome, CPF ou CNPJ..."
+                  emptyHint={
+                    <>
+                      Não encontrado.{" "}
+                      <a href="/cadastros" className="font-medium text-primary underline">
+                        Cadastrar nova pessoa
+                      </a>
+                    </>
+                  }
                 />
               </div>
             </div>
-
-            {isVendedor && onCancelEdit && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="w-full text-muted-foreground"
-                onClick={onCancelEdit}
-              >
-                Cancelar edição
-              </Button>
-            )}
+            <div className="flex items-start gap-2 rounded-lg border border-dashed border-border bg-muted/30 p-3">
+              <UserPlus className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+              <div className="text-xs text-muted-foreground">
+                Selecione alguém previamente cadastrado em{" "}
+                <a href="/cadastros" className="font-medium text-primary hover:underline">
+                  Cadastros
+                </a>
+                . Os dados serão preenchidos automaticamente.
+              </div>
+            </div>
           </div>
+        ) : (
+          <ProprietarioResumo proprietario={proprietario} iconBg={iconBg} onClear={() => onSelect(null)} />
         )}
       </div>
     </section>
+  );
+}
+
+function ProprietarioResumo({
+  proprietario, iconBg, onClear,
+}: { proprietario: Proprietario; iconBg: string; onClear: () => void }) {
+  const nome = nomeDe(proprietario);
+  const doc = docDe(proprietario);
+  const tipo = proprietario.tipoPessoa;
+  const enderecoLinha = [
+    proprietario.endereco?.logradouro,
+    proprietario.endereco?.numero,
+  ].filter(Boolean).join(", ");
+  const cidadeUf = [proprietario.endereco?.cidade, proprietario.endereco?.uf].filter(Boolean).join(" / ");
+
+  return (
+    <div className="space-y-4">
+      {/* Identidade */}
+      <div className="flex items-start gap-3">
+        <div className={cn("flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-bold", iconBg)}>
+          {avatarInitials(nome || "?")}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate font-semibold">{nome || "—"}</span>
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {tipo}
+            </span>
+          </div>
+          <div className="font-mono text-xs text-muted-foreground">
+            {doc ? fmtDoc(tipo, doc) : "—"}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={onClear}
+          className="flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+          title="Trocar pessoa"
+        >
+          <X className="size-4" />
+        </button>
+      </div>
+
+      {/* Detalhes em lista */}
+      <dl className="space-y-2.5 rounded-lg border border-border bg-muted/30 p-3.5 text-sm">
+        {proprietario.email && (
+          <div className="flex items-center gap-2.5">
+            <Mail className="size-3.5 shrink-0 text-muted-foreground" />
+            <dt className="sr-only">E-mail</dt>
+            <dd className="truncate">{proprietario.email}</dd>
+          </div>
+        )}
+        {proprietario.telefone && (
+          <div className="flex items-center gap-2.5">
+            <Phone className="size-3.5 shrink-0 text-muted-foreground" />
+            <dt className="sr-only">Telefone</dt>
+            <dd className="truncate">{proprietario.telefone}</dd>
+          </div>
+        )}
+        {(enderecoLinha || cidadeUf) && (
+          <div className="flex items-start gap-2.5">
+            <MapPin className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+            <div className="min-w-0">
+              <dt className="sr-only">Endereço</dt>
+              {enderecoLinha && <dd className="truncate">{enderecoLinha}</dd>}
+              {cidadeUf && <dd className="truncate text-xs text-muted-foreground">{cidadeUf}</dd>}
+            </div>
+          </div>
+        )}
+        {!proprietario.email && !proprietario.telefone && !enderecoLinha && !cidadeUf && (
+          <div className="text-xs text-muted-foreground">
+            Sem dados de contato/endereço no cadastro.
+          </div>
+        )}
+      </dl>
+
+      <Button type="button" variant="ghost" size="sm" onClick={onClear} className="w-full text-muted-foreground">
+        <Pencil className="mr-1.5 size-3.5" /> Trocar pessoa
+      </Button>
+    </div>
   );
 }
 
