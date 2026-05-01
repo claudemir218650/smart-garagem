@@ -22,6 +22,182 @@ import { useNavigate } from "react-router-dom";
 
 const onlyDigits = (v: string) => v.replace(/\D/g, "");
 
+function maskDocLive(tipo: "PF" | "PJ", v: string) {
+  const d = onlyDigits(v).slice(0, tipo === "PF" ? 11 : 14);
+  if (tipo === "PF") {
+    return d
+      .replace(/^(\d{3})(\d)/, "$1.$2")
+      .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d{1,2})$/, ".$1-$2");
+  }
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
+}
+
+function avatarInitials(nome: string) {
+  return nome
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s[0]?.toUpperCase() ?? "")
+    .join("") || "?";
+}
+
+interface PartyCardProps {
+  role: "vendedor" | "comprador";
+  nome: string;
+  tipo: "PF" | "PJ";
+  doc: string;
+  cadastrado?: boolean;
+  editavel: boolean;
+  onEdit?: () => void;
+  onCancelEdit?: () => void;
+  onChangeNome: (v: string) => void;
+  onChangeTipo: (v: "PF" | "PJ") => void;
+  onChangeDoc: (v: string) => void;
+  onSelectProprietario: (p: Proprietario) => void;
+}
+
+function PartyCard({
+  role, nome, tipo, doc, cadastrado, editavel,
+  onEdit, onCancelEdit, onChangeNome, onChangeTipo, onChangeDoc, onSelectProprietario,
+}: PartyCardProps) {
+  const isVendedor = role === "vendedor";
+  const Icon = isVendedor ? User : ShoppingCart;
+  const accent = isVendedor ? "from-blue-500/10 to-blue-500/0" : "from-emerald-500/10 to-emerald-500/0";
+  const iconBg = isVendedor ? "bg-blue-500/15 text-blue-600" : "bg-emerald-500/15 text-emerald-600";
+  const ringActive = isVendedor ? "ring-blue-500/20" : "ring-emerald-500/20";
+  const docPlaceholder = tipo === "PF" ? "000.000.000-00" : "00.000.000/0000-00";
+  const preenchido = !!nome && !!doc;
+
+  return (
+    <section className={cn(
+      "group relative overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-all",
+      preenchido && "ring-1", preenchido && ringActive,
+    )}>
+      {/* Header com gradiente */}
+      <header className={cn("flex items-center gap-3 border-b border-border bg-gradient-to-br px-5 py-4", accent)}>
+        <div className={cn("flex size-10 items-center justify-center rounded-xl", iconBg)}>
+          <Icon className="size-5" />
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold">{isVendedor ? "Vendedor" : "Comprador"}</h4>
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              {tipo}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {isVendedor ? "Proprietário atual do veículo" : "Quem vai receber o veículo"}
+          </p>
+        </div>
+        {isVendedor && (
+          cadastrado ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[10px] font-semibold text-success">
+              <Check className="size-3" /> Cadastrado
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-1 text-[10px] font-semibold text-warning">
+              Incompleto
+            </span>
+          )
+        )}
+      </header>
+
+      {/* Corpo */}
+      <div className="p-5">
+        {!editavel ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "flex size-12 shrink-0 items-center justify-center rounded-full text-sm font-bold",
+                iconBg,
+              )}>
+                {avatarInitials(nome || "?")}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="truncate font-semibold">{nome || "—"}</div>
+                <div className="font-mono text-xs text-muted-foreground">
+                  {doc ? fmtDoc(tipo, doc) : "documento não informado"}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/30 p-3">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Tipo</div>
+                <div className="mt-0.5 text-sm font-medium">{tipo === "PF" ? "Pessoa Física" : "Pessoa Jurídica"}</div>
+              </div>
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {tipo === "PF" ? "CPF" : "CNPJ"}
+                </div>
+                <div className="mt-0.5 truncate font-mono text-sm font-medium">
+                  {doc ? fmtDoc(tipo, doc) : "—"}
+                </div>
+              </div>
+            </div>
+
+            <Button type="button" variant="outline" size="sm" className="w-full" onClick={onEdit}>
+              <Pencil className="mr-1.5 size-3.5" /> Editar dados
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold text-muted-foreground">
+                {tipo === "PF" ? "Nome completo" : "Razão social"}
+              </Label>
+              <ProprietarioCombobox
+                value={nome}
+                onChange={onChangeNome}
+                onSelect={onSelectProprietario}
+                placeholder={tipo === "PF" ? "Buscar pessoa cadastrada..." : "Buscar empresa cadastrada..."}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Comece a digitar para buscar nos cadastros existentes.
+              </p>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-[auto_1fr]">
+              <SegPfPj value={tipo} onChange={onChangeTipo} />
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">
+                  {tipo === "PF" ? "CPF" : "CNPJ"}
+                </Label>
+                <Input
+                  inputMode="numeric"
+                  value={doc ? fmtDoc(tipo, doc) : ""}
+                  onChange={(e) => onChangeDoc(onlyDigits(e.target.value))}
+                  placeholder={docPlaceholder}
+                  className="font-mono"
+                  maxLength={tipo === "PF" ? 14 : 18}
+                />
+              </div>
+            </div>
+
+            {isVendedor && onCancelEdit && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full text-muted-foreground"
+                onClick={onCancelEdit}
+              >
+                Cancelar edição
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 const statusLabel: Record<StatusTransferencia, string> = {
   rascunho: "Rascunho", andamento: "Em andamento", concluida: "Concluída", cancelada: "Cancelada",
 };
@@ -319,115 +495,41 @@ function Wizard({ onClose }: { onClose: () => void }) {
             <h3 className="text-base font-semibold">Partes envolvidas</h3>
             <p className="text-sm text-muted-foreground">Confirme o vendedor e informe o comprador.</p>
           </div>
-          {/* VENDEDOR */}
-          <section className="rounded-xl border border-border bg-muted/30 p-4">
-            <header className="mb-3 flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <User className="size-4" />
-              </span>
-              <div className="flex-1">
-                <h3 className="text-sm font-semibold leading-tight">Vendedor</h3>
-                <p className="text-xs text-muted-foreground">Proprietário atual do veículo</p>
-              </div>
-              {!vendedorEditavel && (
-                <Button type="button" variant="ghost" size="sm" onClick={() => setVendedorEditavel(true)}>
-                  <Pencil className="mr-1 size-3.5" /> Editar
-                </Button>
-              )}
-            </header>
 
-            {!vendedorEditavel ? (
-              <div className="rounded-lg bg-card border border-border p-3">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{deNome || "—"}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {deTipo} · {deDoc ? fmtDoc(deTipo, deDoc) : "documento não cadastrado"}
-                    </div>
-                  </div>
-                  {vendedorEncontrado ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                      <Check className="size-3" /> Cadastrado
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
-                      Sem cadastro completo
-                    </span>
-                  )}
-                </div>
-                {!vendedorEncontrado && (
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    O proprietário do veículo não está cadastrado em Cadastros — clique em Editar para informar o documento.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div>
-                  <Label>Nome / Razão social</Label>
-                  <ProprietarioCombobox
-                    value={deNome}
-                    onChange={setDeNome}
-                    onSelect={(p) => {
-                      setDeTipo(p.tipoPessoa);
-                      setDeDoc((p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "");
-                    }}
-                    placeholder="Digite para buscar..."
-                  />
-                </div>
-                <div className="grid grid-cols-[max-content_1fr] gap-3">
-                  <SegPfPj value={deTipo} onChange={setDeTipo} />
-                  <div>
-                    <Label>{deTipo === "PF" ? "CPF" : "CNPJ"}</Label>
-                    <Input
-                      value={deDoc}
-                      onChange={(e) => setDeDoc(onlyDigits(e.target.value))}
-                      placeholder={deTipo === "PF" ? "00000000000" : "00000000000000"}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <PartyCard
+              role="vendedor"
+              nome={deNome}
+              tipo={deTipo}
+              doc={deDoc}
+              cadastrado={!!vendedorEncontrado}
+              editavel={vendedorEditavel}
+              onEdit={() => setVendedorEditavel(true)}
+              onCancelEdit={() => setVendedorEditavel(false)}
+              onChangeNome={setDeNome}
+              onChangeTipo={setDeTipo}
+              onChangeDoc={setDeDoc}
+              onSelectProprietario={(p) => {
+                setDeTipo(p.tipoPessoa);
+                setDeDoc((p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "");
+              }}
+            />
 
-          {/* COMPRADOR */}
-          <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <header className="mb-3 flex items-center gap-2">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <ShoppingCart className="size-4" />
-              </span>
-              <div>
-                <h3 className="text-sm font-semibold leading-tight">Comprador</h3>
-                <p className="text-xs text-muted-foreground">Quem vai receber o veículo</p>
-              </div>
-            </header>
-
-            <div className="space-y-3">
-              <div>
-                <Label>Nome / Razão social</Label>
-                <ProprietarioCombobox
-                  value={paraNome}
-                  onChange={setParaNome}
-                  onSelect={(p) => {
-                    setParaTipo(p.tipoPessoa);
-                    setParaDoc((p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "");
-                  }}
-                  placeholder="Digite o nome para buscar nos cadastros..."
-                />
-              </div>
-              <div className="grid grid-cols-[max-content_1fr] gap-3">
-                <SegPfPj value={paraTipo} onChange={setParaTipo} />
-                <div>
-                  <Label>{paraTipo === "PF" ? "CPF" : "CNPJ"}</Label>
-                  <Input
-                    value={paraDoc}
-                    onChange={(e) => setParaDoc(onlyDigits(e.target.value))}
-                    placeholder={paraTipo === "PF" ? "00000000000" : "00000000000000"}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
+            <PartyCard
+              role="comprador"
+              nome={paraNome}
+              tipo={paraTipo}
+              doc={paraDoc}
+              editavel
+              onChangeNome={setParaNome}
+              onChangeTipo={setParaTipo}
+              onChangeDoc={setParaDoc}
+              onSelectProprietario={(p) => {
+                setParaTipo(p.tipoPessoa);
+                setParaDoc((p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "");
+              }}
+            />
+          </div>
         </div>
       )}
 
