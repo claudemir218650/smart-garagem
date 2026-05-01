@@ -321,13 +321,15 @@ function Wizard({ onClose }: { onClose: () => void }) {
   const [veiculoId, setVeiculoId] = useState<string>("");
   const [fluxo, setFluxo] = useState<FluxoTransferencia>("tdv");
 
-  const [deNome, setDeNome] = useState("");
-  const [deDoc, setDeDoc] = useState("");
-  const [deTipo, setDeTipo] = useState<"PF" | "PJ">("PF");
+  const [vendedor, setVendedor] = useState<Proprietario | null>(null);
+  const [comprador, setComprador] = useState<Proprietario | null>(null);
 
-  const [paraNome, setParaNome] = useState("");
-  const [paraDoc, setParaDoc] = useState("");
-  const [paraTipo, setParaTipo] = useState<"PF" | "PJ">("PF");
+  const deNome = vendedor ? nomeDe(vendedor) : "";
+  const deDoc = vendedor ? docDe(vendedor) : "";
+  const deTipo: "PF" | "PJ" = vendedor?.tipoPessoa ?? "PF";
+  const paraNome = comprador ? nomeDe(comprador) : "";
+  const paraDoc = comprador ? docDe(comprador) : "";
+  const paraTipo: "PF" | "PJ" = comprador?.tipoPessoa ?? "PF";
 
   const veiculo = veiculosQ.data?.find((v) => v.id === veiculoId);
 
@@ -338,28 +340,14 @@ function Wizard({ onClose }: { onClose: () => void }) {
     enabled: !!veiculo?.proprietario,
   });
 
-  const [vendedorEditavel, setVendedorEditavel] = useState(false);
   const vendedorEncontrado: Proprietario | undefined = vendedorQ.data?.find((p) => {
     const nome = p.tipoPessoa === "PF" ? p.nomeCompleto : p.razaoSocial;
     return nome?.trim().toLowerCase() === veiculo?.proprietario?.trim().toLowerCase();
   }) ?? vendedorQ.data?.[0];
 
   useEffect(() => {
-    if (!veiculo) return;
-    if (vendedorEncontrado) {
-      setDeNome(
-        vendedorEncontrado.tipoPessoa === "PF"
-          ? (vendedorEncontrado.nomeCompleto ?? "")
-          : (vendedorEncontrado.razaoSocial ?? "")
-      );
-      setDeTipo(vendedorEncontrado.tipoPessoa);
-      setDeDoc(
-        (vendedorEncontrado.tipoPessoa === "PF" ? vendedorEncontrado.cpf : vendedorEncontrado.cnpj) ?? ""
-      );
-    } else if (!deNome) {
-      setDeNome(veiculo.proprietario ?? "");
-    }
-  }, [veiculo, vendedorEncontrado]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (vendedorEncontrado && !vendedor) setVendedor(vendedorEncontrado);
+  }, [vendedorEncontrado]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createMut = useMutation({
     mutationFn: () => api.createTransferencia({
@@ -526,38 +514,8 @@ function Wizard({ onClose }: { onClose: () => void }) {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2">
-            <PartyCard
-              role="vendedor"
-              nome={deNome}
-              tipo={deTipo}
-              doc={deDoc}
-              cadastrado={!!vendedorEncontrado}
-              editavel={vendedorEditavel}
-              onEdit={() => setVendedorEditavel(true)}
-              onCancelEdit={() => setVendedorEditavel(false)}
-              onChangeNome={setDeNome}
-              onChangeTipo={setDeTipo}
-              onChangeDoc={setDeDoc}
-              onSelectProprietario={(p) => {
-                setDeTipo(p.tipoPessoa);
-                setDeDoc((p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "");
-              }}
-            />
-
-            <PartyCard
-              role="comprador"
-              nome={paraNome}
-              tipo={paraTipo}
-              doc={paraDoc}
-              editavel
-              onChangeNome={setParaNome}
-              onChangeTipo={setParaTipo}
-              onChangeDoc={setParaDoc}
-              onSelectProprietario={(p) => {
-                setParaTipo(p.tipoPessoa);
-                setParaDoc((p.tipoPessoa === "PF" ? p.cpf : p.cnpj) ?? "");
-              }}
-            />
+            <PartyCard role="vendedor" proprietario={vendedor} onSelect={setVendedor} />
+            <PartyCard role="comprador" proprietario={comprador} onSelect={setComprador} />
           </div>
         </div>
       )}
