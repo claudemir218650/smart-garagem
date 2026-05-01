@@ -46,6 +46,12 @@ CREATE TABLE IF NOT EXISTS veiculos (
 
 CREATE INDEX IF NOT EXISTS idx_veiculos_user ON veiculos(user_id);
 
+ALTER TABLE veiculos ADD COLUMN IF NOT EXISTS tipo            TEXT NOT NULL DEFAULT 'Carro';
+ALTER TABLE veiculos ADD COLUMN IF NOT EXISTS ano_fabricacao  INT;
+ALTER TABLE veiculos ADD COLUMN IF NOT EXISTS ano_modelo      INT;
+UPDATE veiculos SET ano_fabricacao = ano WHERE ano_fabricacao IS NULL;
+UPDATE veiculos SET ano_modelo     = ano WHERE ano_modelo     IS NULL;
+
 -- =========================================================================
 -- PENDÊNCIAS (multas, débitos, restrições)
 -- =========================================================================
@@ -129,6 +135,30 @@ CREATE TABLE IF NOT EXISTS transferencias (
 );
 
 CREATE INDEX IF NOT EXISTS idx_transferencias_veiculo ON transferencias(veiculo_id);
+
+ALTER TABLE transferencias ADD COLUMN IF NOT EXISTS fluxo       TEXT;
+ALTER TABLE transferencias ADD COLUMN IF NOT EXISTS uf          TEXT NOT NULL DEFAULT 'SP';
+ALTER TABLE transferencias ADD COLUMN IF NOT EXISTS de_cnpj     TEXT;
+ALTER TABLE transferencias ADD COLUMN IF NOT EXISTS para_cnpj   TEXT;
+ALTER TABLE transferencias ADD COLUMN IF NOT EXISTS observacoes TEXT;
+
+CREATE TABLE IF NOT EXISTS transferencia_etapas (
+  id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  transferencia_id  UUID NOT NULL REFERENCES transferencias(id) ON DELETE CASCADE,
+  codigo            TEXT NOT NULL,
+  ordem             INT  NOT NULL,
+  titulo            TEXT NOT NULL,
+  descricao         TEXT,
+  status            TEXT NOT NULL DEFAULT 'pendente',
+  concluida_em      TIMESTAMPTZ,
+  anexo_url         TEXT,
+  observacao        TEXT,
+  prazo_em          TIMESTAMPTZ,
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (transferencia_id, codigo)
+);
+
+CREATE INDEX IF NOT EXISTS idx_transf_etapas_transf ON transferencia_etapas(transferencia_id);
 
 -- =========================================================================
 -- COFRE: master password e credenciais (CPFs etc.)

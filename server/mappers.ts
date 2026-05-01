@@ -5,7 +5,10 @@ export const toVeiculo = (r: any) => ({
   placa: r.placa,
   marca: r.marca,
   modelo: r.modelo,
-  ano: r.ano,
+  tipo: r.tipo ?? "Carro",
+  ano: r.ano_modelo ?? r.ano,
+  anoFabricacao: r.ano_fabricacao ?? r.ano,
+  anoModelo: r.ano_modelo ?? r.ano,
   cor: r.cor,
   combustivel: r.combustivel,
   chassi: r.chassi,
@@ -66,10 +69,29 @@ export const toTransferencia = (r: any) => ({
   veiculoId: r.veiculo_id,
   deNome: r.de_nome,
   deCpf: r.de_cpf,
+  deCnpj: r.de_cnpj ?? undefined,
   paraNome: r.para_nome,
   paraCpf: r.para_cpf,
+  paraCnpj: r.para_cnpj ?? undefined,
   inicio: new Date(r.inicio).toISOString(),
   status: r.status,
+  fluxo: r.fluxo ?? undefined,
+  uf: r.uf ?? "SP",
+  observacoes: r.observacoes ?? undefined,
+});
+
+export const toEtapa = (r: any) => ({
+  id: r.id,
+  transferenciaId: r.transferencia_id,
+  codigo: r.codigo,
+  ordem: r.ordem,
+  titulo: r.titulo,
+  descricao: r.descricao ?? undefined,
+  status: r.status,
+  concluidaEm: r.concluida_em ? new Date(r.concluida_em).toISOString() : undefined,
+  anexoUrl: r.anexo_url ?? undefined,
+  observacao: r.observacao ?? undefined,
+  prazoEm: r.prazo_em ? new Date(r.prazo_em).toISOString() : undefined,
 });
 
 export const toCredencial = (r: any) => ({
@@ -77,6 +99,28 @@ export const toCredencial = (r: any) => ({
   label: r.label,
   cpf: r.cpf,
   ultimoUso: r.ultimo_uso ? new Date(r.ultimo_uso).toISOString() : undefined,
+});
+
+export const toProprietario = (r: any) => ({
+  id: r.id,
+  tipoPessoa: r.tipo_pessoa,
+  nomeCompleto: r.nome_completo ?? undefined,
+  cpf: r.cpf ?? undefined,
+  dataNascimento: r.data_nascimento ? new Date(r.data_nascimento).toISOString().slice(0, 10) : undefined,
+  razaoSocial: r.razao_social ?? undefined,
+  nomeFantasia: r.nome_fantasia ?? undefined,
+  cnpj: r.cnpj ?? undefined,
+  email: r.email ?? undefined,
+  telefone: r.telefone ?? undefined,
+  endereco: {
+    cep: r.cep,
+    logradouro: r.logradouro,
+    numero: r.numero,
+    complemento: r.complemento ?? undefined,
+    bairro: r.bairro,
+    cidade: r.cidade,
+    uf: r.uf,
+  },
 });
 
 export const toUser = (r: any) => ({

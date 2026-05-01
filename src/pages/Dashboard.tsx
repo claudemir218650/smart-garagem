@@ -43,7 +43,14 @@ export default function Dashboard() {
   const pendencias = pendQ.data ?? [];
   const transfs = transfQ.data ?? [];
 
-  const proximas = [...pendencias].sort((a, b) => +new Date(a.prazo) - +new Date(b.prazo)).slice(0, 5);
+  const pendenciasOrdenadas = [...pendencias].sort((a, b) => +new Date(a.prazo) - +new Date(b.prazo));
+  const proximas = pendenciasOrdenadas.slice(0, 5);
+  const urgentesCount = pendencias.filter(p => p.status === "urgente").length;
+  const transfsAndamento = transfs.filter(t => t.status === "andamento").length;
+  const transfsRascunho = transfs.filter(t => t.status === "rascunho").length;
+  const proxima = pendenciasOrdenadas[0];
+  const proximaVeiculo = proxima ? veiculos.find(v => v.id === proxima.veiculoId) : undefined;
+  const proximaDias = proxima ? diasAte(proxima.prazo) : null;
   const buscaNorm = busca.toLowerCase();
   const buscaPlaca = busca.replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
   const filtered = veiculos.filter((v) =>
@@ -61,9 +68,11 @@ export default function Dashboard() {
           <>
             <button className="relative rounded-lg border border-border bg-card p-2 hover:bg-muted" aria-label="Notificações">
               <Bell className="size-4" />
-              <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">3</span>
+              {urgentesCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] font-semibold text-destructive-foreground">{urgentesCount}</span>
+              )}
             </button>
-            <Button onClick={() => navigate("/veiculos")}>
+            <Button onClick={() => navigate("/cadastros?tab=veiculo")}>
               <Plus className="mr-1.5 size-4" /> Adicionar Veículo
             </Button>
           </>
@@ -76,13 +85,20 @@ export default function Dashboard() {
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-32 rounded-xl" />)
         ) : (
           <>
-            <Kpi icon={Car} label="Total de Veículos" value={veiculos.length} footer="+1 este mês" footerTone="success" />
+            <Kpi icon={Car} label="Total de Veículos" value={veiculos.length} />
             <Kpi icon={AlertTriangle} label="Pendências Abertas" value={pendencias.length}
-              footer={`${pendencias.filter(p => p.status === "urgente").length} urgentes`} footerTone="danger" />
-            <Kpi icon={CalendarClock} label="Próximo Vencimento" value="IPVA Civic" footer="vence em 8 dias" footerTone="warn" />
+              footer={urgentesCount > 0 ? `${urgentesCount} urgentes` : undefined}
+              footerTone={urgentesCount > 0 ? "danger" : "default"} />
+            <Kpi
+              icon={CalendarClock}
+              label="Próximo Vencimento"
+              value={proxima && proximaVeiculo ? `${proxima.tipo} ${proximaVeiculo.modelo}` : "—"}
+              footer={proxima ? (proximaDias! < 0 ? `${Math.abs(proximaDias!)}d em atraso` : `vence em ${proximaDias}d`) : undefined}
+              footerTone={proxima ? (proximaDias! < 0 ? "danger" : proximaDias! <= 15 ? "warn" : "default") : "default"}
+            />
             <Kpi icon={ArrowRightLeft} label="Transferências Ativas"
-              value={transfs.filter(t => t.status === "andamento").length}
-              footer="1 aguardando assinatura" />
+              value={transfsAndamento}
+              footer={transfsRascunho > 0 ? `${transfsRascunho} em rascunho` : undefined} />
           </>
         )}
       </div>

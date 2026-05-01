@@ -31,12 +31,20 @@ export default function Veiculos() {
   const navigate = useNavigate();
   const { data, isLoading } = useQuery({ queryKey: ["veiculos"], queryFn: api.listVeiculos });
 
+  const goCadastrar = () => navigate("/cadastros?tab=veiculo");
+
+  const novoBtn = (
+    <Button onClick={goCadastrar}>
+      <Plus className="mr-1.5 size-4" /> Adicionar Veículo
+    </Button>
+  );
+
   return (
     <>
       <PageHeader
         title="Veículos"
         subtitle="Todos os veículos cadastrados"
-        actions={<Button><Plus className="mr-1.5 size-4" /> Adicionar Veículo</Button>}
+        actions={novoBtn}
       />
 
       {isLoading ? (
@@ -46,7 +54,7 @@ export default function Veiculos() {
       ) : !data?.length ? (
         <EmptyState icon={Car} title="Nenhum veículo cadastrado"
           description="Adicione o primeiro veículo para começar a controlar tudo."
-          action={<Button><Plus className="mr-1.5 size-4" /> Adicionar Veículo</Button>} />
+          action={novoBtn} />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {data.map((v) => (

@@ -1,5 +1,5 @@
 import type {
-  Veiculo, Pendencia, IPVA, Licenciamento, Seguro, Transferencia, Credencial, User,
+  Veiculo, Pendencia, IPVA, Licenciamento, Seguro, Transferencia, Credencial, User, Proprietario,
 } from "@/types";
 
 const TOKEN_KEY = "garagem.token";
@@ -132,8 +132,26 @@ export const api = {
   async listTransferencias() {
     return request<Transferencia[]>("/transferencias");
   },
+  async getTransferencia(id: string) {
+    return request<Transferencia>(`/transferencias/${id}`);
+  },
   async createTransferencia(input: Partial<Transferencia>) {
     return request<Transferencia>("/transferencias", { method: "POST", body: JSON.stringify(input) });
+  },
+  async updateEtapa(transferenciaId: string, codigo: string, body: { status?: string; observacao?: string; anexoUrl?: string }) {
+    return request<Transferencia>(`/transferencias/${transferenciaId}/etapas/${codigo}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    });
+  },
+
+  // proprietarios
+  async listProprietarios(q?: string) {
+    const qs = q ? `?q=${encodeURIComponent(q)}` : "";
+    return request<Proprietario[]>(`/proprietarios${qs}`);
+  },
+  async createProprietario(input: Partial<Proprietario>) {
+    return request<Proprietario>("/proprietarios", { method: "POST", body: JSON.stringify(input) });
   },
 
   // cofre

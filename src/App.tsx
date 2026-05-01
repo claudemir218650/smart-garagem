@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard.tsx";
 import Veiculos from "./pages/Veiculos.tsx";
 import VeiculoDetalhe from "./pages/VeiculoDetalhe.tsx";
 import Transferencias from "./pages/Transferencias.tsx";
+import TransferenciaDetalhe from "./pages/TransferenciaDetalhe.tsx";
 import Licenciamento from "./pages/Licenciamento.tsx";
 import IPVA from "./pages/IPVA.tsx";
 import Seguros from "./pages/Seguros.tsx";
@@ -26,7 +27,7 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <Routes>
             <Route element={<AppLayout />}>
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/veiculos" element={<Veiculos />} />
               <Route path="/veiculos/:id" element={<VeiculoDetalhe />} />
               <Route path="/transferencias" element={<Transferencias />} />
+              <Route path="/transferencias/:id" element={<TransferenciaDetalhe />} />
               <Route path="/licenciamento" element={<Licenciamento />} />
               <Route path="/ipva" element={<IPVA />} />
               <Route path="/seguros" element={<Seguros />} />

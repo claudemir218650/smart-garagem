@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,11 +12,39 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import type { Proprietario, TipoPessoa } from "@/types";
+import type { TipoPessoa } from "@/types";
+import { api, ApiError } from "@/lib/api";
 
 const UFS = ["AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG","PA","PB","PR","PE","PI","RJ","RN","RS","RO","RR","SC","SP","SE","TO"];
 
 const onlyDigits = (v: string) => v.replace(/\D/g, "");
+
+function isValidCPF(value: string): boolean {
+  const c = onlyDigits(value);
+  if (c.length !== 11 || /^(\d)\1{10}$/.test(c)) return false;
+  const calc = (slice: number) => {
+    let sum = 0;
+    for (let i = 0; i < slice; i++) sum += Number(c[i]) * (slice + 1 - i);
+    const r = (sum * 10) % 11;
+    return r === 10 ? 0 : r;
+  };
+  return calc(9) === Number(c[9]) && calc(10) === Number(c[10]);
+}
+
+function isValidCNPJ(value: string): boolean {
+  const c = onlyDigits(value);
+  if (c.length !== 14 || /^(\d)\1{13}$/.test(c)) return false;
+  const calc = (len: number) => {
+    const weights = len === 12
+      ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+      : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(c[i]) * weights[i];
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return calc(12) === Number(c[12]) && calc(13) === Number(c[13]);
+}
 const maskCPF = (v: string) => onlyDigits(v).slice(0, 11)
   .replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2");
 const maskCNPJ = (v: string) => onlyDigits(v).slice(0, 14)
@@ -31,7 +60,6 @@ const enderecoSchema = z.object({
   cep: z.string().refine((v) => onlyDigits(v).length === 8, "CEP inválido"),
   logradouro: z.string().trim().min(1, "Informe o logradouro").max(120),
   numero: z.string().trim().min(1, "Informe o número").max(10),
-  complemento: z.string().trim().max(60).optional().or(z.literal("")),
   bairro: z.string().trim().min(1, "Informe o bairro").max(80),
   cidade: z.string().trim().min(1, "Informe a cidade").max(80),
   uf: z.string().length(2, "UF inválida"),
@@ -46,7 +74,7 @@ const baseSchema = z.object({
 const pfSchema = baseSchema.extend({
   tipoPessoa: z.literal("PF"),
   nomeCompleto: z.string().trim().min(3, "Informe o nome completo").max(120),
-  cpf: z.string().refine((v) => onlyDigits(v).length === 11, "CPF inválido"),
+  cpf: z.string().refine(isValidCPF, "CPF inválido"),
   dataNascimento: z.string().min(1, "Informe a data de nascimento").refine((v) => {
     const d = new Date(v); return !isNaN(d.getTime()) && d <= new Date();
   }, "Data inválida"),
@@ -56,18 +84,18 @@ const pjSchema = baseSchema.extend({
   tipoPessoa: z.literal("PJ"),
   razaoSocial: z.string().trim().min(2, "Informe a razão social").max(150),
   nomeFantasia: z.string().trim().max(150).optional().or(z.literal("")),
-  cnpj: z.string().refine((v) => onlyDigits(v).length === 14, "CNPJ inválido"),
+  cnpj: z.string().refine(isValidCNPJ, "CNPJ inválido"),
 });
 
 const schema = z.discriminatedUnion("tipoPessoa", [pfSchema, pjSchema]);
 type FormValues = z.infer<typeof schema>;
 
-const STORAGE_KEY = "garagem.proprietario";
-
-const defaultEndereco = { cep: "", logradouro: "", numero: "", complemento: "", bairro: "", cidade: "", uf: "" };
+const defaultEndereco = { cep: "", logradouro: "", numero: "", bairro: "", cidade: "", uf: "" };
 
 export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?: string; defaultNome?: string }) {
   const [tipo, setTipo] = useState<TipoPessoa>("PF");
+  const [cepLoading, setCepLoading] = useState(false);
+  const qc = useQueryClient();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -82,16 +110,22 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
     } as FormValues,
   });
 
-  useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const data = JSON.parse(raw) as Proprietario;
-      setTipo(data.tipoPessoa);
-      form.reset(data as unknown as FormValues);
-    } catch { /* ignore */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const createMut = useMutation({
+    mutationFn: (values: FormValues) => api.createProprietario(values as any),
+    onSuccess: () => {
+      toast.success("Proprietário cadastrado");
+      qc.invalidateQueries({ queryKey: ["proprietarios"] });
+      setTipo("PF");
+      form.reset({
+        tipoPessoa: "PF", nomeCompleto: "", cpf: "", dataNascimento: "",
+        email: "", telefone: "", endereco: defaultEndereco,
+      } as FormValues);
+    },
+    onError: (e) => {
+      const msg = e instanceof ApiError ? `${e.message}${(e.payload as any)?.field ? ` (${(e.payload as any).field})` : ""}` : "Erro ao salvar";
+      toast.error(msg);
+    },
+  });
 
   const handleTipoChange = (novo: TipoPessoa) => {
     setTipo(novo);
@@ -111,13 +145,32 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
     }
   };
 
-  const onSubmit = (values: FormValues) => {
-    const payload = { id: "owner-1", ...values } as Proprietario;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-    toast.success("Dados do proprietário salvos");
-  };
+  const onSubmit = (values: FormValues) => createMut.mutate(values);
 
   const errors = form.formState.errors;
+
+  const lookupCep = async (raw: string) => {
+    const cep = onlyDigits(raw);
+    if (cep.length !== 8) return;
+    setCepLoading(true);
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const data = await res.json();
+      if (data?.erro) {
+        toast.error("CEP não encontrado");
+        return;
+      }
+      const opts = { shouldValidate: true, shouldDirty: true, shouldTouch: true } as const;
+      form.setValue("endereco.logradouro", data.logradouro ?? "", opts);
+      form.setValue("endereco.bairro", data.bairro ?? "", opts);
+      form.setValue("endereco.cidade", data.localidade ?? "", opts);
+      form.setValue("endereco.uf", String(data.uf ?? "").toUpperCase(), opts);
+    } catch {
+      toast.error("Falha ao consultar CEP");
+    } finally {
+      setCepLoading(false);
+    }
+  };
 
   return (
     <Tabs value={tipo} onValueChange={(v) => handleTipoChange(v as TipoPessoa)}>
@@ -142,7 +195,11 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
                 id="cpf"
                 placeholder="000.000.000-00"
                 value={(form.watch("cpf" as const) as string) ?? ""}
-                onChange={(e) => form.setValue("cpf" as const, maskCPF(e.target.value), { shouldValidate: true })}
+                onChange={(e) => {
+                  form.setValue("cpf" as const, maskCPF(e.target.value), { shouldValidate: false });
+                  if ("cpf" in errors) form.clearErrors("cpf" as const);
+                }}
+                onBlur={() => form.trigger("cpf" as const)}
               />
               {"cpf" in errors && errors.cpf && (
                 <p className="text-sm text-destructive mt-1">{errors.cpf.message as string}</p>
@@ -178,7 +235,11 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
               id="cnpj"
               placeholder="00.000.000/0000-00"
               value={(form.watch("cnpj" as const) as string) ?? ""}
-              onChange={(e) => form.setValue("cnpj" as const, maskCNPJ(e.target.value), { shouldValidate: true })}
+              onChange={(e) => {
+                form.setValue("cnpj" as const, maskCNPJ(e.target.value), { shouldValidate: false });
+                if ("cnpj" in errors) form.clearErrors("cnpj" as const);
+              }}
+              onBlur={() => form.trigger("cnpj" as const)}
             />
             {"cnpj" in errors && errors.cnpj && (
               <p className="text-sm text-destructive mt-1">{errors.cnpj.message as string}</p>
@@ -213,9 +274,12 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
                 id="cep"
                 placeholder="00000-000"
                 value={form.watch("endereco.cep") ?? ""}
-                onChange={(e) => form.setValue("endereco.cep", maskCEP(e.target.value), { shouldValidate: true })}
+                onChange={(e) => form.setValue("endereco.cep", maskCEP(e.target.value), { shouldValidate: false })}
+                onBlur={(e) => lookupCep(e.target.value)}
+                disabled={cepLoading}
               />
-              {errors.endereco?.cep && <p className="text-sm text-destructive mt-1">{errors.endereco.cep.message}</p>}
+              {cepLoading && <p className="text-xs text-muted-foreground mt-1">Buscando endereço…</p>}
+              {!cepLoading && errors.endereco?.cep && <p className="text-sm text-destructive mt-1">{errors.endereco.cep.message}</p>}
             </div>
             <div className="md:col-span-2">
               <Label htmlFor="logradouro">Logradouro *</Label>
@@ -228,10 +292,6 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
               <Label htmlFor="numero">Número *</Label>
               <Input id="numero" maxLength={10} {...form.register("endereco.numero")} />
               {errors.endereco?.numero && <p className="text-sm text-destructive mt-1">{errors.endereco.numero.message}</p>}
-            </div>
-            <div className="md:col-span-2">
-              <Label htmlFor="complemento">Complemento</Label>
-              <Input id="complemento" maxLength={60} {...form.register("endereco.complemento")} />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -262,7 +322,7 @@ export function ProprietarioForm({ defaultEmail, defaultNome }: { defaultEmail?:
         </div>
 
         <div className="flex justify-end pt-2">
-          <Button type="submit" disabled={form.formState.isSubmitting}>Salvar proprietário</Button>
+          <Button type="submit" disabled={createMut.isPending}>{createMut.isPending ? "Salvando..." : "Salvar proprietário"}</Button>
         </div>
       </form>
     </Tabs>

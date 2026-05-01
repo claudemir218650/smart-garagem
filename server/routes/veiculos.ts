@@ -24,20 +24,28 @@ veiculosRouter.get("/veiculos/:id", async (req: AuthedRequest, res) => {
 
 veiculosRouter.post("/veiculos", async (req: AuthedRequest, res) => {
   const b = req.body ?? {};
-  const required = ["placa","marca","modelo","ano","cor","combustivel","chassi","renavam","proprietario"];
-  for (const k of required) {
-    if (b[k] === undefined || b[k] === null || b[k] === "") {
+  const anoFab = b.anoFabricacao ?? b.ano;
+  const anoMod = b.anoModelo ?? b.ano;
+  const required: Array<[string, any]> = [
+    ["placa", b.placa], ["marca", b.marca], ["modelo", b.modelo],
+    ["tipo", b.tipo], ["anoFabricacao", anoFab], ["anoModelo", anoMod],
+    ["cor", b.cor], ["combustivel", b.combustivel],
+    ["chassi", b.chassi], ["renavam", b.renavam], ["proprietario", b.proprietario],
+  ];
+  for (const [k, v] of required) {
+    if (v === undefined || v === null || v === "") {
       return res.status(400).json({ error: "missing_field", field: k });
     }
   }
   const placaNorm = String(b.placa).replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
   const rows = await sql`
     INSERT INTO veiculos (
-      user_id, placa, marca, modelo, ano, cor, combustivel,
-      chassi, renavam, proprietario, status, proxima_acao,
+      user_id, placa, marca, modelo, tipo, ano, ano_fabricacao, ano_modelo,
+      cor, combustivel, chassi, renavam, proprietario, status, proxima_acao,
       ind_ipva, ind_licenc, ind_seguro
     ) VALUES (
-      ${req.userId!}, ${placaNorm}, ${b.marca}, ${b.modelo}, ${Number(b.ano)},
+      ${req.userId!}, ${placaNorm}, ${b.marca}, ${b.modelo}, ${b.tipo},
+      ${Number(anoMod)}, ${Number(anoFab)}, ${Number(anoMod)},
       ${b.cor}, ${b.combustivel}, ${b.chassi}, ${b.renavam}, ${b.proprietario},
       ${b.status ?? "ok"}::status_geral, ${b.proximaAcao ?? ""},
       ${b.indicadores?.ipva ?? "ok"}::status_geral,

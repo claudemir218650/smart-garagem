@@ -1,11 +1,18 @@
 export type StatusGeral = "ok" | "atencao" | "urgente";
 
+export type TipoVeiculo =
+  | "Carro" | "Motocicleta" | "Motoneta" | "Camionete" | "Utilitário"
+  | "Caminhão" | "Ônibus" | "Outro";
+
 export interface Veiculo {
   id: string;
   placa: string;
   marca: string;
   modelo: string;
+  tipo: TipoVeiculo | string;
   ano: number;
+  anoFabricacao: number;
+  anoModelo: number;
   cor: string;
   combustivel: string;
   chassi: string;
@@ -39,11 +46,33 @@ export interface Seguro {
 }
 
 export type StatusTransferencia = "rascunho" | "andamento" | "concluida" | "cancelada";
+export type FluxoTransferencia = "tdv" | "tradicional";
+export type StatusEtapa = "pendente" | "em_andamento" | "concluida" | "dispensada";
+
+export interface TransferenciaEtapa {
+  id: string;
+  transferenciaId: string;
+  codigo: string;
+  ordem: number;
+  titulo: string;
+  descricao?: string;
+  status: StatusEtapa;
+  concluidaEm?: string;
+  anexoUrl?: string;
+  observacao?: string;
+  prazoEm?: string;
+  links?: { label: string; url: string }[];
+}
+
 export interface Transferencia {
   id: string; veiculoId: string;
-  deNome: string; deCpf: string;
-  paraNome: string; paraCpf: string;
+  deNome: string; deCpf: string; deCnpj?: string;
+  paraNome: string; paraCpf: string; paraCnpj?: string;
   inicio: string; status: StatusTransferencia;
+  fluxo?: FluxoTransferencia;
+  uf?: string;
+  observacoes?: string;
+  etapas?: TransferenciaEtapa[];
 }
 
 export interface Credencial {

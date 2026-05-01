@@ -8,6 +8,7 @@ import { pendenciasRouter }     from "./routes/pendencias";
 import { financeiroRouter }     from "./routes/financeiro";
 import { transferenciasRouter } from "./routes/transferencias";
 import { cofreRouter }          from "./routes/cofre";
+import { proprietariosRouter }  from "./routes/proprietarios";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 3001);
@@ -24,6 +25,7 @@ app.use("/api", pendenciasRouter);
 app.use("/api", financeiroRouter);
 app.use("/api", transferenciasRouter);
 app.use("/api", cofreRouter);
+app.use("/api", proprietariosRouter);
 
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error("[server error]", err);
